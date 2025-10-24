@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 public class FilesInfoService
 {
-    public static string GetFilesInfo(SmbConfig config)
+    public static string GetFilesInfo(string path)
     {
-        var directoryInfo = new DirectoryInfo(config.Host);
+        var directoryInfo = new DirectoryInfo(path);
         var files = directoryInfo.GetFiles();
         var output = new StringBuilder();
 

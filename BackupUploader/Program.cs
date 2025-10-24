@@ -35,6 +35,7 @@ var config = new Config
 
 string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
 string fileName = $"father_music_bac_{timestamp}.zip";
+var zipOutputFolder = config.ZipOutput;
 config.ZipOutput += fileName;
 var message = "";
 
@@ -46,16 +47,20 @@ try
     Console.WriteLine("Archiving...");
     BackupService.CreateZip(config.SourceFolder, config.ZipOutput);
 
-    Console.WriteLine("Clear old backups...");
+    Console.WriteLine("Upload to SMB...");
+    UploadService.UploadToSMB(config.ZipOutput, config.SMB);
+
+    Console.WriteLine("Clear old backups from disk...");
+    ClearOldBackupsService.CleanupOldBackups(zipOutputFolder);
+
+    Console.WriteLine("Clear old backups from SMB...");
     ClearOldBackupsService.CleanupOldBackups(config.SMB);
 
     //Console.WriteLine("Upload to WebDAV...");
     //await UploadService.UploadToWebDav(config.ZipOutput, config.WebDAV);
 
-    Console.WriteLine("Upload to SMB...");
-    UploadService.UploadToSMB(config.ZipOutput, config.SMB);
 
-    message = $"father music backup ok\n{FilesInfoService.GetFilesInfo(config.SMB)}";
+    message = $"father music backup ok\nDisk\n{FilesInfoService.GetFilesInfo(zipOutputFolder)}\n---\nSMB\n{FilesInfoService.GetFilesInfo(config.SMB.Host)}";
 
 }
 catch (Exception ex)
@@ -66,9 +71,4 @@ finally
 {
     await NotificationService.SendTelegramMessage(config.Telegram.BotToken, config.Telegram.ChatId, message);
     Console.WriteLine(message);
-
-    if (File.Exists(config.ZipOutput))
-    {
-        File.Delete(config.ZipOutput);
-    }
 }
